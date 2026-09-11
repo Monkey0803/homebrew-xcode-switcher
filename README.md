@@ -8,6 +8,7 @@ Xcode versions.
 
 ```bash
 brew tap Monkey0803/xcode-switcher
+brew trust Monkey0803/xcode-switcher   # Homebrew 6 and later refuse to load untrusted taps
 
 # Prebuilt release — ad-hoc signed and not notarized
 brew install --cask --no-quarantine xcode-switcher
