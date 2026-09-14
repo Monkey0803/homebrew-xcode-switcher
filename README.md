@@ -8,45 +8,69 @@ Xcode versions.
 
 ```bash
 brew tap Monkey0803/xcode-switcher
-brew trust Monkey0803/xcode-switcher   # Homebrew 6 and later refuse to load untrusted taps
+brew trust Monkey0803/xcode-switcher        # Homebrew 6 and later refuse to load untrusted taps
 
-# Prebuilt release — ad-hoc signed and not notarized
-brew install --cask --no-quarantine xcode-switcher
-
-# Or build from source; the resulting app carries no quarantine attribute
-brew install xcode-switcher
+brew install --cask xcode-switcher          # prebuilt; add --force to replace an unmanaged app
+brew install xcode-switcher                 # or build from source (macOS 26 or earlier)
 ```
 
-## Why the cask needs `--no-quarantine`
+The cask is currently pinned to **v1.3.0** instead of v1.4.0. The v1.4.0 artifact
+published on 2026-09-11 crashes on launch: the `xcodebuild archive` release path
+signs the bundle in a way that makes dyld reject the embedded
+`Sparkle.framework` ("mapping process and mapped file (non-platform) have
+different Team IDs"), so the process dies with SIGABRT. The script build path is
+unaffected, which is why v1.3.0 launches. This goes back to 1.4.x once that is
+fixed **and the result has been launched**, not merely checked with
+`codesign --verify`.
 
-Homebrew only distributes macOS apps whose artifacts pass its Gatekeeper checks,
-which is why the official `homebrew/cask` accepts notarized apps. Xcode Switcher
-is deliberately published ad-hoc signed and not notarized, so:
+## Gatekeeper
 
-- this cask lives in this tap instead of `homebrew/cask`, and
-- a quarantined copy is blocked by Gatekeeper on first launch. Pass
-  `--no-quarantine` to skip that, or approve the app once under
-  **System Settings → Privacy & Security** afterwards.
+The published builds are ad-hoc signed and deliberately not notarized, which is
+why the official `homebrew/cask` cannot carry them and they live in this tap.
+
+Homebrew 6 removed `--no-quarantine`, so a fresh install is quarantined and
+Gatekeeper blocks the first launch. Approve the app once under
+**System Settings → Privacy & Security**, or clear the attribute yourself after
+checking the download's `SHA256SUMS`:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Xcode Switcher.app"
+```
+
+Until the app is approved, the bundled `xcodeswitcher` CLI is blocked too:
+Gatekeeper kills every executable inside a quarantined bundle, and all you see is
+a silent `Killed: 9`.
 
 The global shortcut additionally needs Accessibility permission.
 
-## Why the formula needs a recent Xcode
+## Formula (build from source)
 
 Building from source avoids Gatekeeper entirely, but needs **Xcode 26 or later**:
 the app uses macOS 26 APIs (`NSGlassEffectView`), and a runtime `#available`
 check cannot help a compiler that cannot see the symbol at all.
 
-The formula is currently only *expected* to work when the active Xcode is 26.
-With Xcode 27 the SDK 27 `@State` macro is expanded through `swift-plugin-server`,
-which Homebrew's formula build sandbox refuses. See the header comment in
-`Formula/xcode-switcher.rb` for the full verification status.
+The formula is limited to **macOS 26 (Tahoe) and earlier**. On macOS 27 either
+Xcode fails: with Xcode 27 the SDK 27 `@State` macro is expanded through
+`swift-plugin-server`, which Homebrew's formula build sandbox refuses; with Xcode
+26 Homebrew itself refuses to build, because on macOS 27 it demands Xcode 27.
+See the header comment in `Formula/xcode-switcher.rb`.
 
-## Bumping after a release
+## Notes for maintainers
 
 Each release publishes `Xcode-Switcher-<version>-<build>-local.zip` (and `.dmg`)
-alongside a `SHA256SUMS` file. Update the cask accordingly:
+alongside a `SHA256SUMS` file. Update the cask as follows:
 
 ```ruby
 version "1.4.0,2"
 sha256 "..."   # from SHA256SUMS, or: curl -sL <zip url> | shasum -a 256
 ```
+
+Then **launch the installed app once** before pushing the bump. The v1.4.0
+mistake got through because the artifact was only checked structurally: version,
+bundled CLI output and `codesign --verify` all passed while the app itself could
+not start.
+
+The cask installs the CLI with `command_wrapper` rather than `binary`. A symlink
+in `/opt/homebrew/bin` is not equivalent: Foundation derives `Bundle.main` from
+the invocation path, so a symlinked CLI misses the app's String Catalog and
+silently falls back to the source language.
