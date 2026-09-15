@@ -14,14 +14,13 @@ brew install --cask xcode-switcher          # prebuilt; add --force to replace a
 brew install xcode-switcher                 # or build from source (macOS 26 or earlier)
 ```
 
-The cask is currently pinned to **v1.3.0** instead of v1.4.0. The v1.4.0 artifact
-published on 2026-09-11 crashes on launch: the `xcodebuild archive` release path
-signs the bundle in a way that makes dyld reject the embedded
-`Sparkle.framework` ("mapping process and mapped file (non-platform) have
-different Team IDs"), so the process dies with SIGABRT. The script build path is
-unaffected, which is why v1.3.0 launches. This goes back to 1.4.x once that is
-fixed **and the result has been launched**, not merely checked with
-`codesign --verify`.
+The cask tracks the latest release: currently **v1.5.0**. For history, v1.4.0 was
+withdrawn — the artifact published on 2026-09-11 crashed on launch because the
+`xcodebuild archive` release path signed the bundle in a way that made dyld
+reject the embedded `Sparkle.framework` ("mapping process and mapped file
+(non-platform) have different Team IDs"), so the process died with SIGABRT. That
+is fixed from v1.4.1 onward, and the release scripts now launch the artifact
+before publishing rather than only checking it structurally.
 
 ## Gatekeeper
 
@@ -61,7 +60,7 @@ Each release publishes `Xcode-Switcher-<version>-<build>-local.zip` (and `.dmg`)
 alongside a `SHA256SUMS` file. Update the cask as follows:
 
 ```ruby
-version "1.4.0,2"
+version "1.5.0,4"
 sha256 "..."   # from SHA256SUMS, or: curl -sL <zip url> | shasum -a 256
 ```
 
