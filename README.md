@@ -14,7 +14,7 @@ brew install --cask xcode-switcher          # prebuilt; add --force to replace a
 brew install xcode-switcher                 # or build from source (macOS 26 or earlier)
 ```
 
-The cask tracks the latest release: currently **v1.5.1**. For history, v1.4.0 was
+The cask tracks the latest release: currently **v2.1.0**. For history, v1.4.0 was
 withdrawn — the artifact published on 2026-09-11 crashed on launch because the
 `xcodebuild archive` release path signed the bundle in a way that made dyld
 reject the embedded `Sparkle.framework` ("mapping process and mapped file
@@ -60,7 +60,7 @@ Each release publishes `Xcode-Switcher-<version>-<build>-local.zip` (and `.dmg`)
 alongside a `SHA256SUMS` file. Update the cask as follows:
 
 ```ruby
-version "1.5.1,5"
+version "2.1.0,8"
 sha256 "..."   # from SHA256SUMS, or: curl -sL <zip url> | shasum -a 256
 ```
 
